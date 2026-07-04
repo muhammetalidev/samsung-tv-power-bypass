@@ -71,8 +71,10 @@ Check the `tv_bypass_control.ino` file for detailed comments. **Note:** Make sur
 ## 📸 Schematic and System Overview
 
 | Circuit Schematic | Final System Setup |
-| :--- | :--- |
-| ![Schematic](images/sema.png) | ![System](images/sistem_ss.png) |
+| :--- |
+| ![Schematic](images/sema.png) | 
+| :--- |
+| ![System](images/sistem_ss.png) |
 
 ## 🎥 Project Test Video
 You can watch the system boot-up sequence and stability test by clicking the image below:
