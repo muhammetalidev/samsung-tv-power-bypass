@@ -7,40 +7,40 @@
 void setup() {
   pinMode(buzz, OUTPUT);    // |
   pinMode(soc, OUTPUT);     // |
-  pinMode(panel, OUTPUT);   // -> Pinlerimizi tanımlıyoruz.
+  pinMode(panel, OUTPUT);   // -> Define our pins.
   pinMode(vamp, OUTPUT);    // |
   pinMode(sinyal, INPUT);   // |
   
   digitalWrite(buzz, LOW);  // |
-  digitalWrite(soc, LOW);   // | -> Bu kısım kullandığınız röle kartlarına göre değiştirilecek kısım.
+  digitalWrite(soc, LOW);   // | -> This section should be adjusted based on the relay modules you use.
   digitalWrite(panel, LOW); // |
   digitalWrite(vamp, HIGH); // |
 }
 
 void loop() {
-  // En başta sinyal HIGH ise sistemi beklemeye al ve direkt loop'un başına dön
+  // If the signal is HIGH at the very beginning, keep the system on standby and restart the loop
   if (digitalRead(sinyal) == HIGH) {
     noTone(buzz);
     return;
   }
   
-  // Sinyal LOW oldu, tetikleme başlıyor:
-  digitalWrite(soc, HIGH); // SoC rölesini aç
+  // Signal is LOW, trigger sequence starts:
+  digitalWrite(soc, HIGH); // Turn on SoC relay
   delay(100);
-  digitalWrite(vamp, LOW); // Amfi Rölesini aç
+  digitalWrite(vamp, LOW); // Turn on Amp relay
   delay(100); 
-  tone(buzz, 523);         // 1. BIOS sesi
+  tone(buzz, 523);         // 1st BIOS beep
   delay(100);
   noTone(buzz);
-  delay(200);              // Sinyalin gitmesini bekle
+  delay(200);              // Wait for the signal to stabilize
 
   // =========================================================================
-  // SİNYAL YAKALAMA VE ZAMAN AŞIMI DÖNGÜSÜ
+  // SIGNAL DETECTION AND TIMEOUT LOOP
   // =========================================================================
   bool sinyalYakalandi = false; 
   unsigned long baslangicZamani = millis();
 
-  // 5 saniye boyunca pini hızlıca örnekle, sinyal gelirse döngüyü kır
+  // Sample the pin quickly for 5 seconds; if a signal arrives, break the loop
   while (millis() - baslangicZamani < 5000) { 
     if (digitalRead(sinyal) == LOW) { 
       sinyalYakalandi = true;
@@ -48,50 +48,50 @@ void loop() {
     }
   }
 
-  // Eğer sinyal 5 saniye içinde hiç gelmediyse alarm çal
+  // If the signal does not arrive within 5 seconds, trigger the alarm
   if (!sinyalYakalandi) {
     digitalWrite(panel, LOW); 
     digitalWrite(soc, LOW); 
     digitalWrite(vamp, HIGH); 
     
     for(;;) {
-      tone(buzz, 330); // 1. ALARM NOKTASI: Sinyal hiç gelmedi alarmı
+      tone(buzz, 330); // 1st ALARM POINT: Signal failed to arrive alarm
       delay(500); 
       noTone(buzz);
       delay(20);
     }
   }
 
-  // Sinyal yakalandıktan sonra kararlı hale gelmesi için filtre süresi
+  // Filter delay for signal stabilization after detection
   delay(50); 
   
-  // İsteğe bağlı 10 ms gecikme
+  // Optional 10ms delay
   delay(10); 
   // =========================================================================
 
-  // Sinyal sorunsuz geldiyse panel voltajını ver
+  // If the signal arrived successfully, provide voltage to the panel
   digitalWrite(panel, HIGH); 
   
-  // PARAZİT ENGELLEME: Panel açıldığı an voltaj sıçramasından dolayı 
-  // sinyal pini anlık sapıtabilir. Sinyalin kendine gelmesi için 150 ms avans veriyoruz.
+  // NOISE SUPPRESSION: The signal pin might flicker briefly when the panel is powered on.
+  // Adding 150ms allowance for the signal to stabilize.
   delay(150); 
 
-  // ACİL DURUM 2: Panel açıldıktan sonra sinyal hala çökmüş durumdaysa (HIGH ise)
+  // EMERGENCY 2: If the signal is collapsed (HIGH) after the panel is powered on
   if(digitalRead(sinyal) == HIGH) { 
     digitalWrite(panel, LOW); 
     digitalWrite(soc, LOW); 
     digitalWrite(vamp, HIGH); 
     
     for(;;) {
-      tone(buzz, 330); // 2. ALARM NOKTASI: Panel açıldıktan sonra çöktü alarmı
-      delay(250);      // Bu alarmın ritmi biraz daha hızlı (250ms)
+      tone(buzz, 330); // 2nd ALARM POINT: Signal collapsed after panel power-on alarm
+      delay(250);      // Slightly faster alarm rhythm (250ms)
       noTone(buzz);
       delay(20);
     }
   }
 
   // =========================================================================
-  // 1 DAKİKALIK GÖZLEM DÖNGÜSÜ (Televizyonun bootloopa girmesini önlemek için)
+  // 1-MINUTE OBSERVATION LOOP (To prevent the TV from entering a bootloop)
   // =========================================================================
   for(int z = 0; z < 600; z++) { 
     if(digitalRead(sinyal) == HIGH) {
@@ -109,7 +109,7 @@ void loop() {
     delay(100); 
   }
 
-  // GÜVENLİ KAPANIŞ TAKİBİ:
+  // SAFE SHUTDOWN MONITORING:
   for(;;) {
     if(digitalRead(sinyal) == HIGH) {
       delay(3000); 
